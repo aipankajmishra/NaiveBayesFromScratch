@@ -19,8 +19,10 @@ class NaiveBayes:
 
     @staticmethod
     def find_unique_classes_with_count(a):
-        _class = np.asarray(np.unique(a,return_counts=True)).T
-        return __class[:0], _class[:1]
+        __class = np.asarray(np.unique(a,return_counts=True)).T
+        print(__class[:,0])
+        print(__class)
+        return __class[:,0], __class[:,1]
     
     def __init__(self, alpha = 1):
         self.alpha = alpha
@@ -31,26 +33,24 @@ class NaiveBayes:
         for idx, cls in enumerate(self.classes):
             self.class_probabilities[cls] = self.class_freq[idx] /  self.length
     
-    # Calculate P(X | C1)
-    def calculate_likelihood_probabilities(self):
-        
-        for idx, cls in self.classes:
-            indices = np.where(self.y_train == cls)
-            # Get the filtered dataframe of our interest
-            X_temp = self.X_train[indices]
-
-            # Now, go feature by feature to calcu
-
     # PDF of the gaussian distribution to compute stats
+    def gaussian_pdf(self,x,class_idx):
+        mean = self.mean[class_idx]
+        var = self.var[class_idx]
+        numerator = np.exp(- (x-mean)**2 / (2 * var))
+        denominator = np.sqrt(2 * np.pi * var)
+        return numerator / denominator
 
 
-
+    # TODO: Fix the errors occuring here
     def calculate_statistics(self):
-        self.mean = np.zeros((len(self.classes), self.X.shape[1])) 
-        self.std = np.zeros((len(self.classes), self.X.shape[1]))
+        self.mean = np.zeros((len(self.classes), len(self.y_train)), dtype=np.float64)
+        print(self.mean.shape)
+        print() 
+        self.var = np.zeros((len(self.classes), len(self.y_train)), dtype=np.float64) 
         for idx, cls in enumerate(self.classes):
-            self.mean[idx:] = self.X[self.y == cls].mean(axis = 0)
-            self.std[idx:] = self.X[self.y == cls].std(axis = 0)
+                self.mean[idx,:] = self.X_train[self.y_train == cls].mean(axis = 0)
+                self.var[idx,:] = self.X_train[self.y_train == cls].var(axis = 0)
 
 
     def fit(self, X_train, y_train):
@@ -58,24 +58,30 @@ class NaiveBayes:
         self.classes, self.class_freq = NaiveBayes.find_unique_classes_with_count(y_train)
         self.length = len(X_train)
 
+        self.X_train = X_train 
+        self.y_train = y_train
+
         self.class_probabilities = {}
         # Calculating the class probabilities
         self.calculate_class_probabilities()
-        
-        # Calculating likelihood probabilities
-        self.calculate_likelihood_probabilities()
 
-        # Calculate the mean, std dev for Gaussian transform
+        # Calculate the mean, var dev for Gaussian transform
         self.calculate_statistics()
 
 
     
     def _predict(self, x):
         "x: single instance of 1 row and d column size"
-        pass
+        diff_cls_prediction = []
+        for idx, cls in enumerate(self.classes):
+            prior = np.log(self.class_probabilities[cls])
+            likelihood = np.sum(np.log(NaiveBayes.gaussian_pdf(x,idx)))
+            diff_cls_prediction.append(prior+likelihood)
+        
+        return self.classes[np.argmax(diff_cls_prediction)]
     
     def predict(self,X_test):
-        preditions = []
+        predictions = []
         for x in X_test:
             predictions.append(self._predict(x))
         return predictions
@@ -97,6 +103,7 @@ def evaluate_errors():
 
 if __name__ == "__main__":
     X_train,X_test, y_train, y_test = import_data()
-    NB = NaiveBayes(X_train, y_train)
-    NB.fit()
-
+    NB = NaiveBayes(alpha= 1)
+    NB.fit(X_train, y_train)
+    predictions = NB.predict(X_test)
+    print("Here")

@@ -2,9 +2,9 @@ import warnings
 import pandas as pd
 import numpy as np
 
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_breast_cancer, load_iris
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold, train_test_split
 warnings.filterwarnings(action="ignore")
 
 
@@ -13,7 +13,7 @@ import random
 random.seed(100)
 np.random.seed(100)
 
-TEST_SIZE  = 0.3
+TEST_SIZE  = 0.5
 
 
 class NaiveBayes:
@@ -89,7 +89,7 @@ class NaiveBayes:
 
 #Import the datasets as X,y and return as train and test in proportion to pre-set split ratio
 def import_data():
-    iris = load_iris()
+    iris = load_breast_cancer()
     X,y = iris.data, iris.target
     X_train,X_test, y_train, y_test = train_test_split(X,y, test_size = TEST_SIZE)
     return X_train,X_test, y_train, y_test
@@ -104,12 +104,30 @@ def run_logistic_regression(X_train,y_train,X_test):
 
 
 # Evaluate performance of the two models side by side
-def evaluate_errors():
-    pass
+def evaluate_errors(X,y,npermutation = 100):
+    test_size = [np.arange(0.1,0.5,0.1)]  # Size of the test size we will consider, training size = 1 - test_size
+    length = len(X_train)
+    
+    average_error_naive_bayes = []
+    average_error_linear_regression = []
+    
+
+    for TEST_SZ in test_size:
+        errors = {'naive_bayes':0, 'linear_regression':0}
+        shuf = np.random.permutation(length)
+        ntrain_sz = (1-TEST_SZ) * (length)
+        X_train_val = X_train[shuf[:ntrain_sz]]
+        y_train_val = y_train[shuf[:ntrain_sz]]
+        X_test_val = X_test[shuf[ntrain_sz:]]
+        y_test_val = y_test[shuf[ntrain_sz:]]
+        for i in range(npermutation):
+            X_train_val, y_train_val, X_test_val, y_test_val = return_shuffled_datasets(X_train,y)
+            shuf = 
+
 
 if __name__ == "__main__":
     X_train,X_test, y_train, y_test = import_data()
-    NB = NaiveBayes(alpha= 1)
+    NB = NaiveBayes(alpha= 10)
     NB.fit(X_train, y_train)
     predictions = NB.predict(X_test)
     accuracy = np.average([predictions == y_test])

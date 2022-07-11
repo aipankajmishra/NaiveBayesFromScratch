@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 
 from sklearn.datasets import load_iris
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 warnings.filterwarnings(action="ignore")
 
@@ -12,7 +13,7 @@ import random
 random.seed(100)
 np.random.seed(100)
 
-TEST_SIZE  = 0.2
+TEST_SIZE  = 0.3
 
 
 class NaiveBayes:
@@ -20,8 +21,6 @@ class NaiveBayes:
     @staticmethod
     def find_unique_classes_with_count(a):
         __class = np.asarray(np.unique(a,return_counts=True)).T
-        print(__class[:,0])
-        print(__class)
         return __class[:,0], __class[:,1]
     
     def __init__(self, alpha = 1):
@@ -31,7 +30,7 @@ class NaiveBayes:
     def calculate_class_probabilities(self):
 
         for idx, cls in enumerate(self.classes):
-            self.class_probabilities[cls] = self.class_freq[idx] /  self.length
+            self.class_probabilities[cls] = self.class_freq[idx] /  self.rows
     
     # PDF of the gaussian distribution to compute stats
     def gaussian_pdf(self,x,class_idx):
@@ -44,22 +43,22 @@ class NaiveBayes:
 
     # TODO: Fix the errors occuring here
     def calculate_statistics(self):
-        self.mean = np.zeros((len(self.classes), len(self.y_train)), dtype=np.float64)
-        print(self.mean.shape)
-        print() 
-        self.var = np.zeros((len(self.classes), len(self.y_train)), dtype=np.float64) 
+        self.mean = np.zeros((len(self.classes), self.columns), dtype=np.float64)
+         
+        self.var = np.zeros((len(self.classes), self.columns), dtype=np.float64) 
         for idx, cls in enumerate(self.classes):
                 self.mean[idx,:] = self.X_train[self.y_train == cls].mean(axis = 0)
                 self.var[idx,:] = self.X_train[self.y_train == cls].var(axis = 0)
 
 
     def fit(self, X_train, y_train):
+        self.X_train = X_train 
+        self.y_train = y_train       
         
         self.classes, self.class_freq = NaiveBayes.find_unique_classes_with_count(y_train)
-        self.length = len(X_train)
+        self.rows = X_train.shape[0]
+        self.columns = X_train.shape[1]
 
-        self.X_train = X_train 
-        self.y_train = y_train
 
         self.class_probabilities = {}
         # Calculating the class probabilities
@@ -75,7 +74,7 @@ class NaiveBayes:
         diff_cls_prediction = []
         for idx, cls in enumerate(self.classes):
             prior = np.log(self.class_probabilities[cls])
-            likelihood = np.sum(np.log(NaiveBayes.gaussian_pdf(x,idx)))
+            likelihood = np.sum(np.log(self.gaussian_pdf(x,idx)))
             diff_cls_prediction.append(prior+likelihood)
         
         return self.classes[np.argmax(diff_cls_prediction)]
@@ -86,8 +85,6 @@ class NaiveBayes:
             predictions.append(self._predict(x))
         return predictions
 
-    def __repr__(self):
-        return "Class values are {}".format(self.classes) 
 
 
 #Import the datasets as X,y and return as train and test in proportion to pre-set split ratio
@@ -96,6 +93,15 @@ def import_data():
     X,y = iris.data, iris.target
     X_train,X_test, y_train, y_test = train_test_split(X,y, test_size = TEST_SIZE)
     return X_train,X_test, y_train, y_test
+
+
+def run_logistic_regression(X_train,y_train,X_test):
+    lr = LogisticRegression()
+    lr.fit(X_train,y_train)
+    pred = lr.predict(X_test)
+    return pred
+
+
 
 # Evaluate performance of the two models side by side
 def evaluate_errors():
@@ -106,4 +112,10 @@ if __name__ == "__main__":
     NB = NaiveBayes(alpha= 1)
     NB.fit(X_train, y_train)
     predictions = NB.predict(X_test)
-    print("Here")
+    accuracy = np.average([predictions == y_test])
+    # Now that we have got Naive bayes
+
+    predictinos_from_logistic_regression = run_logistic_regression(X_train, y_train, X_test)
+    accuracy_lr = np.average([predictinos_from_logistic_regression == y_test])
+
+    print(f"The accuracy of linear regression model is {accuracy_lr}")

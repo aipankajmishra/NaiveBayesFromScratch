@@ -10,7 +10,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold, train_test_split
 warnings.filterwarnings(action="ignore")
 
-faulthandler.enable()
+
 # Set seeds
 import random 
 random.seed(100)
@@ -44,7 +44,7 @@ class NaiveBayes:
         return numerator / denominator
 
 
-    # TODO: Refactor the code
+    # TODO: Refactor the code, check the correctness of data...
     def calculate_statistics(self):
         self.mean = np.zeros((len(self.classes), self.columns), dtype=np.float64)
          
@@ -151,18 +151,17 @@ def plot_errors(err_nb, err_lr, train_set):
     plt.show()
 
 if __name__ == "__main__":
-    print("M")
-    # X_train,X_test, y_train, y_test,X,y = import_data()
-    # NB = NaiveBayes(alpha= 10)
-    # NB.fit(X_train, y_train)
-    # predictions = NB.predict(X_test)
-    # accuracy = np.average([predictions == y_test])
-    # # Now that we have got Naive bayes
+    X_train,X_test, y_train, y_test,X,y = import_data()
+    NB = NaiveBayes(alpha= 10)
+    NB.fit(X_train, y_train)
+    predictions = NB.predict(X_test)
+    accuracy = np.average([predictions == y_test])
+    # Now that we have got Naive bayes
 
-    # predictinos_from_logistic_regression = run_logistic_regression(X_train, y_train, X_test)
-    # accuracy_lr = np.average([predictinos_from_logistic_regression == y_test])
+    predictinos_from_logistic_regression = run_logistic_regression(X_train, y_train, X_test)
+    accuracy_lr = np.average([predictinos_from_logistic_regression == y_test])
 
-    #average_error_naive_bayes,average_error_logistic_regression,test_set = evaluate_errors(X,y,100)
-    #train_set  = [1-x for x in test_set]
-    #plot_errors(average_error_naive_bayes, average_error_logistic_regression, train_set)
+    average_error_naive_bayes,average_error_logistic_regression,test_set = evaluate_errors(X,y,100)
+    train_set  = [1-x for x in test_set]
+    plot_errors(average_error_naive_bayes, average_error_logistic_regression, train_set)
 
